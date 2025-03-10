@@ -1,51 +1,31 @@
-# link.py
-#
-# The code that defines the behaviour of Link.
-#
-# You should be able to write the code for a simple solution to the
-# game version of the Wumpus World here, getting information about the
-# game state from self.gameWorld, and using makeMove() to generate the
-# next move.
-#
-# Written by: Simon Parsons
-# Last Modified: 25/08/20
-
-import world
 import random
-import utils
-from utils import Directions
+from utils import Directions, Pose
 from collections import deque
 
 class Link():
 
     def __init__(self, dungeon):
-
-        # Make a copy of the world an attribute, so that Link can
-        # query the state of the world
         self.gameWorld = dungeon
-
-        # What moves are possible.
         self.moves = [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]
-    
         self.visited = set()
-    # check if next posi
-    def checkvalid(self,pos):
-        if self.gameWorld.linkSmelly():
-            print("location: [",pos.x,pos.y,"] is smelly!")
+
+    def checkvalid(self, pos, allow_windy=False):
+        """Check if the move is safe (not smelly, windy, out of bounds, containing Wumpus or Pit)."""
+        if self.gameWorld.isSmelly(pos):
+            print(f"Avoiding Smelly tile at ({pos.x}, {pos.y})")
             return False
-        if self.gameWorld.linkWindy():
-            print("location: [",pos.x,pos.y,"] is windy!")
-            return False
-        if any(pos.x == wumpus.x and pos.y == wumpus.y for wumpus in self.gameWorld.getWumpusLocation()):
-            print("location: [",pos.x,pos.y,"] is has wumpus!")
+        if not allow_windy and self.gameWorld.isWindy(pos):
+            print(f"Avoiding Windy tile at ({pos.x}, {pos.y})")
             return False
         if any(pos.x == wumpus.x and pos.y == wumpus.y for wumpus in self.gameWorld.getWumpusLocation()):
-            print("location: [",pos.x,pos.y,"] is has pit!")
+            print(f"Avoiding Wumpus at ({pos.x}, {pos.y})")
+            return False
+        if any(pos.x == pit.x and pos.y == pit.y for pit in self.gameWorld.getPitsLocation()):
+            print(f"Avoiding Pit at ({pos.x}, {pos.y})")
             return False
         return True
-    
 
-    def bfs_search(self, start, goal):
+    def bfs_search(self, start, goal, allow_windy=False):
         """Breadth-First Search to find the shortest path to the gold while avoiding danger."""
         queue = deque([(start, [])])
         visited = set()
@@ -65,17 +45,14 @@ class Link():
                 
                 if (0 <= new_pos.x <= self.gameWorld.maxX and
                     0 <= new_pos.y <= self.gameWorld.maxY and
-                    self.checkvalid(new_pos) and
+                    self.checkvalid(new_pos, allow_windy) and
                     (new_pos.x, new_pos.y) not in visited):
                     queue.append((new_pos, path + [move]))
-    
-    def makeMove(self):
-        # This is the function you need to define
-        #
-        # For now we have a placeholder, which always moves Link
-        # directly towards the gold.
         
-        """Decides the best move for Link based on BFS pathfinding."""
+        return []  # No valid path found
+
+    def makeMove(self):
+        """Determines the best move using BFS while ensuring safety dynamically."""
         myPosition = self.gameWorld.getLinkLocation()
         allGold = self.gameWorld.getGoldLocation()
 
@@ -84,32 +61,33 @@ class Link():
             return random.choice(self.moves)
 
         nextGold = allGold[0]  # Target the closest gold
-        path = self.bfs_search(myPosition, nextGold)
-
+        print(f"Finding safe path from {myPosition.x},{myPosition.y} to gold at {nextGold.x},{nextGold.y}")
+        
+        path = self.bfs_search(myPosition, nextGold, allow_windy=False)
+        
+        if not path:
+            print("No fully safe path found, allowing windy tiles...")
+            path = self.bfs_search(myPosition, nextGold, allow_windy=True)
+        
         if path:
-            # Recalculate path every step to avoid outdated paths
             print(f"Path found: {path}")
             next_move = path[0]
             new_position = self.getNewPosition(myPosition, next_move)
-            
-            if self.checkvalid(new_position):
-                return next_move
-            else:
-                print("Next move leads to danger, recalculating...")
-                return self.makeMove()  # Recalculate if move is unsafe
+            return next_move
         
         # If no clear path is found, make a safe random move
-        safe_moves = [move for move in self.moves if self.checkvalid(self.getNewPosition(myPosition, move))]
+        safe_moves = [move for move in self.moves if self.checkvalid(self.getNewPosition(myPosition, move), allow_windy=True)]
         if not safe_moves:
             print("No safe moves found, making a random move.")
             return random.choice(self.moves)
+        
         chosen_move = random.choice(safe_moves)
         print(f"No path found, moving {chosen_move}")
         return chosen_move
 
     def getNewPosition(self, position, move):
         """Get new position based on movement direction."""
-        newPosition = utils.Pose()
+        newPosition = Pose()
         newPosition.x = position.x + (1 if move == Directions.EAST else -1 if move == Directions.WEST else 0)
         newPosition.y = position.y + (1 if move == Directions.NORTH else -1 if move == Directions.SOUTH else 0)
         return newPosition
