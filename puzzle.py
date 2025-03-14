@@ -50,7 +50,7 @@ def main():
             time.sleep(1)
     end_time = time.time()
 
-    print("complete time: ",end_time-start_time,"ms")
+    print("complete time: ",end_time-start_time,"s")
     # Display message at end
     if puzzle.status == utils.State.WON:
         print("You succeeded!")

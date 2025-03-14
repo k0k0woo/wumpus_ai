@@ -40,7 +40,7 @@ def main():
         # Uncomment this for a printout of world state every step
         # utils.printGameState(gameWorld)
         display.update()
-        time.sleep(0.1)
+        time.sleep(1)
 
     # Display message at end
     if gameWorld.status == utils.State.WON:
