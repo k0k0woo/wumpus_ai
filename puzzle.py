@@ -42,12 +42,15 @@ def main():
         time.sleep(1)
 
     # Now run...
+    start_time = time.time()
     while not(puzzle.isSolved(endState)):
         puzzle.makeAMove(endState)
         if not config.headless:
             display.update()
             time.sleep(1)
+    end_time = time.time()
 
+    print("complete time: ",end_time-start_time,"ms")
     # Display message at end
     if puzzle.status == utils.State.WON:
         print("You succeeded!")
