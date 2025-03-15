@@ -59,8 +59,8 @@ class PuzzleWorld(World):
         :param goal: The target state
         :return: A list of moves in the format [Link_move, Wumpus1_move, Wumpus2_move, ...]
         """
-        link_path = self.bfs_search(self.lLoc, goal.lLoc) # get links path
-        wumpus_paths = [self.bfs_search(self.wLoc[i], goal.wLoc[i]) for i in range(len(self.wLoc))] # get wumpus paths
+        link_path = self.dfs_search(self.lLoc, goal.lLoc) # get links path
+        wumpus_paths = [self.dfs_search(self.wLoc[i], goal.wLoc[i]) for i in range(len(self.wLoc))] # get wumpus paths
         
         max_length = max(len(link_path), max(len(path) for path in wumpus_paths)) # get length of longest path
         plan = []
@@ -114,7 +114,7 @@ class PuzzleWorld(World):
         visited = set() # init visited
         
         while stack: # while moves in stack
-            current, path = stack.pop() # get last item in stack
+            current, path = stack.pop(-1) # get last item in stack
             if (current.x, current.y) in visited: # if already visited
                 continue # skip
             

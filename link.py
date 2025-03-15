@@ -66,6 +66,41 @@ class Link():
                     queue.append((new_pos, path + [move])) # add position and path to queue
         
         return []  # No valid path found
+    
+    def dfs_search(self, start, goal, allow_windy=False):
+        """
+        Finds the shortest path from start to goal while avoiding dangers using Breadth-First Search.
+        
+        :param start: Starting position of Link.
+        :param goal: Target position (gold location).
+        :param allow_windy: If True, allows Link to move through windy tiles.
+        :return: A list of moves representing the shortest safe path, or an empty list if no path is found.
+        """
+        stack = deque([(start, [])]) # create queue (position,path-to-reach)
+        visited = set()
+        
+        while stack:
+            (current, path) = stack.pop(-1)
+            if (current.x, current.y) in visited:
+                continue
+            
+            visited.add((current.x, current.y))
+            
+            if current.x == goal.x and current.y == goal.y:
+                return path # valid path to gold found
+            
+            for move in self.moves:
+                new_pos = self.getNewPosition(current, move)
+                
+                if (0 <= new_pos.x <= self.gameWorld.maxX and
+                    0 <= new_pos.y <= self.gameWorld.maxY and
+                    self.checkvalid(new_pos, allow_windy) and
+                    (new_pos.x, new_pos.y) not in visited):
+
+                    # if move results in valid and safe position not already added
+                    stack.append((new_pos, path + [move])) # add position and path to queue
+        
+        return []  # No valid path found
 
     def makeMove(self):
         """
