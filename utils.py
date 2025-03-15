@@ -33,9 +33,13 @@ class State(Enum):
 class Pose():
     x = 0
     y = 0
-
+    cost = 0
+    def __lt__(self, other):
+        return self.cost < other.cost
+    def __gt__(self, other):
+        return self.cost > other.cost
     def print(self):
-        print('[', self.x, ',', self.y, ']')
+        print('Cost:',self.cost,'[', self.x, ',', self.y, ']')
 
 # Check if two game elements are in the same location
 def sameLocation(pose1, pose2):

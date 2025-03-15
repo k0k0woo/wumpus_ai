@@ -59,8 +59,8 @@ class PuzzleWorld(World):
         :param goal: The target state
         :return: A list of moves in the format [Link_move, Wumpus1_move, Wumpus2_move, ...]
         """
-        link_path = self.dfs_search(self.lLoc, goal.lLoc) # get links path
-        wumpus_paths = [self.dfs_search(self.wLoc[i], goal.wLoc[i]) for i in range(len(self.wLoc))] # get wumpus paths
+        link_path = self.uniform_cost(self.lLoc, goal.lLoc) # get links path
+        wumpus_paths = [self.uniform_cost(self.wLoc[i], goal.wLoc[i]) for i in range(len(self.wLoc))] # get wumpus paths
         
         max_length = max(len(link_path), max(len(path) for path in wumpus_paths)) # get length of longest path
         plan = []
@@ -130,6 +130,41 @@ class PuzzleWorld(World):
         
         return [] # if no path return empty array
     
+
+    def uniform_cost(self, start, goal):
+        """
+        Uses uniform cost to find a path from start to goal.
+        
+        :param start: The starting position
+        :param goal: The target position
+        :return: A list of directional moves to reach the goal
+        """
+        queue = [] # init stack
+        heapq.heappush(queue,(start, []))
+        visited = set() # init visited
+        paths = []
+        while queue: # while moves in stack
+            (current,path) = heapq.heappop(queue) # get item
+            if (current.x, current.y) in visited: # if already visited
+                continue # skip
+            
+            visited.add((current.x, current.y)) # add to visited
+            
+            if current.x == goal.x and current.y == goal.y: # if current is goal
+                heapq.heappush(paths,(current, path)) # append to complete paths array
+            
+            for move in self.moves: # for each move
+                new_pos = self.getNewPosition(current, move) # get possible new position
+                if (0 <= new_pos.x <= self.maxX and 0 <= new_pos.y <= self.maxY and (new_pos.x, new_pos.y) not in visited): # if valid and not visited
+                    heapq.heappush(queue, (new_pos, path + [move]))# append to the queue
+
+        if paths:
+            (position,path) = paths[0]
+            #print(position.print())
+            return path # return best path
+        else:
+            return []
+    
     def getNewPosition(self, position, move):
         """
         Computes a new position given a move direction.
@@ -141,6 +176,12 @@ class PuzzleWorld(World):
         new_pos = Pose() # init pose
         new_pos.x = position.x + (1 if move == Directions.EAST else -1 if move == Directions.WEST else 0) # increment x
         new_pos.y = position.y + (1 if move == Directions.NORTH else -1 if move == Directions.SOUTH else 0) # increment y
+        
+        if new_pos.x == position.x and new_pos.y == new_pos.y:
+            new_pos.cost = position.cost
+        else:
+            new_pos.cost = position.cost + 1
+
         return new_pos # return new pose
 
     # A move is a list of the directions that [Link, Wumpus1, Wumpus2,
