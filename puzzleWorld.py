@@ -142,7 +142,6 @@ class PuzzleWorld(World):
         queue = [] # init stack
         heapq.heappush(queue,(start, []))
         visited = set() # init visited
-        paths = []
         while queue: # while moves in stack
             (current,path) = heapq.heappop(queue) # get item
             if (current.x, current.y) in visited: # if already visited
@@ -151,17 +150,14 @@ class PuzzleWorld(World):
             visited.add((current.x, current.y)) # add to visited
             
             if current.x == goal.x and current.y == goal.y: # if current is goal
-                heapq.heappush(paths,(current, path)) # append to complete paths array
+                current.print()
+                return path# append to complete paths array
             
             for move in self.moves: # for each move
                 new_pos = self.getNewPosition(current, move) # get possible new position
                 if (0 <= new_pos.x <= self.maxX and 0 <= new_pos.y <= self.maxY and (new_pos.x, new_pos.y) not in visited): # if valid and not visited
                     heapq.heappush(queue, (new_pos, path + [move]))# append to the queue
 
-        if paths:
-            (position,path) = paths[0]
-            #print(position.print())
-            return path # return best path
         else:
             return []
     
@@ -177,10 +173,7 @@ class PuzzleWorld(World):
         new_pos.x = position.x + (1 if move == Directions.EAST else -1 if move == Directions.WEST else 0) # increment x
         new_pos.y = position.y + (1 if move == Directions.NORTH else -1 if move == Directions.SOUTH else 0) # increment y
         
-        if new_pos.x == position.x and new_pos.y == new_pos.y:
-            new_pos.cost = position.cost
-        else:
-            new_pos.cost = position.cost + 1
+        new_pos.cost = abs(new_pos.x-position.x) + abs(new_pos.y-position.y) + position.cost
 
         return new_pos # return new pose
 
