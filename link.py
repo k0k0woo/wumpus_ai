@@ -2,6 +2,7 @@ import random
 from utils import Directions, Pose
 from collections import deque
 import heapq
+import math
 class Link():
 
     def __init__(self, dungeon):
@@ -112,14 +113,19 @@ class Link():
         myPosition = self.gameWorld.getLinkLocation()
         allGold = self.gameWorld.getGoldLocation()
 
-        nextGold = allGold[0]  # Target the closest gold
+        # determine closest gold via euclidian distance difference
+        nextGold = allGold[0]  
+        for gold in allGold:
+            if (abs(myPosition.x-nextGold.x) + abs(myPosition.y-nextGold.y)) > (abs(gold.x-nextGold.x) + abs(gold.y-nextGold.y)):
+                nextGold = gold
+
         print(f"Finding safe path from {myPosition.x},{myPosition.y} to gold at {nextGold.x},{nextGold.y}")
         
-        path = self.uniform_cost(myPosition, nextGold, allow_windy=False) # initial path to avoid windy squares
+        path = self.A_star_search(myPosition, nextGold, allow_windy=False) # initial path to avoid windy squares
         
         if not path:
             print("No fully safe path found, allowing windy tiles...")
-            path = self.uniform_cost(myPosition, nextGold, allow_windy=True) # if no safe path try again allowing windy tiles
+            path = self.A_star_search(myPosition, nextGold, allow_windy=True) # if no safe path try again allowing windy tiles
         
         if path:
             print(f"Path found: {path}") # follow move of path
@@ -155,7 +161,6 @@ class Link():
             visited.add((current.x, current.y)) # add to visited
             
             if current.x == goal.x and current.y == goal.y: # if current is goal
-                current.print()
                 return path# append to complete paths array
             
             for move in self.moves: # for each move
@@ -166,6 +171,38 @@ class Link():
         else:
             return []
         
+
+    def A_star_search(self, start, goal,allow_windy=False):
+        """
+        Uses A star search to find a path from the start to the goal
+        
+        :param start: The starting position
+        :param goal: The target position
+        :return: A list of directional moves to reach the goal
+        """
+        queue = [] # init stack
+        heapq.heappush(queue,(start, []))
+        visited = set() # init visited
+        while queue: # while moves in stack
+            (current,path) = heapq.heappop(queue) # get item
+            if (current.x, current.y) in visited: # if already visited
+                continue # skip
+            
+            visited.add((current.x, current.y)) # add to visited
+            
+            if current.x == goal.x and current.y == goal.y: # if current is goal
+                return path# append to complete paths array
+            
+            for move in self.moves: # for each move
+                new_pos = self.getNewPosition(current, move) # get possible new position
+                # add euclidian cost
+                new_pos_euclidian = math.sqrt(abs(new_pos.x-goal.x)**2 + abs(new_pos.y-goal.y)**2) # euclidian to goal
+                new_pos.cost += new_pos_euclidian
+                if (0 <= new_pos.x <= self.gameWorld.maxX and 0 <= new_pos.y <= self.gameWorld.maxY and (new_pos.x, new_pos.y) not in visited and self.checkvalid(new_pos, allow_windy)): # if valid and not visited
+                    heapq.heappush(queue, (new_pos, path + [move]))# append to the queue
+
+        else:
+            return []
     def getNewPosition(self, position, move):
         """
         Calculates the new position based on the current position and move direction.
