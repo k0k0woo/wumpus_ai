@@ -173,7 +173,7 @@ class Link():
         
     def greedy_search(self, start, goal,allow_windy=False):
         """
-        Uses gready search to find a path from start to goal.
+        Uses greedy search to find a path from start to goal.
         
         :param start: The starting position
         :param goal: The target position
