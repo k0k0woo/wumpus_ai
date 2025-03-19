@@ -3,6 +3,7 @@ from utils import Directions, Pose
 from collections import deque
 import heapq
 import math
+import time
 class Link():
 
     def __init__(self, dungeon):
@@ -20,16 +21,16 @@ class Link():
         """
 
         if self.gameWorld.isSmelly(pos):  # Smelly tiles indicate proximity to Wumpus
-            print(f"Avoiding Smelly tile at ({pos.x}, {pos.y})")
+            #print(f"Avoiding Smelly tile at ({pos.x}, {pos.y})")
             return False
         if not allow_windy and self.gameWorld.isWindy(pos):  # Windy tiles indicate proximity to a pit
-            print(f"Avoiding Windy tile at ({pos.x}, {pos.y})")
+            #print(f"Avoiding Windy tile at ({pos.x}, {pos.y})")
             return False
         if any(pos.x == wumpus.x and pos.y == wumpus.y for wumpus in self.gameWorld.getWumpusLocation()): # Tile checked if it contains wumpus
-            print(f"Avoiding Wumpus at ({pos.x}, {pos.y})")
+            #print(f"Avoiding Wumpus at ({pos.x}, {pos.y})")
             return False
         if any(pos.x == pit.x and pos.y == pit.y for pit in self.gameWorld.getPitsLocation()): # Tile checked if it contains pit
-            print(f"Avoiding Pit at ({pos.x}, {pos.y})")
+            #print(f"Avoiding Pit at ({pos.x}, {pos.y})")
             return False
         return True
 
@@ -81,7 +82,7 @@ class Link():
         visited = set()
         
         while stack:
-            (current, path) = stack.pop(-1)
+            (current, path) = stack.pop()
             if (current.x, current.y) in visited:
                 continue
             
@@ -119,27 +120,27 @@ class Link():
             if (abs(myPosition.x-nextGold.x) + abs(myPosition.y-nextGold.y)) > (abs(gold.x-nextGold.x) + abs(gold.y-nextGold.y)):
                 nextGold = gold
 
-        print(f"Finding safe path from {myPosition.x},{myPosition.y} to gold at {nextGold.x},{nextGold.y}")
+        #print(f"Finding safe path from {myPosition.x},{myPosition.y} to gold at {nextGold.x},{nextGold.y}")
         
-        path = self.A_star_search(myPosition, nextGold, allow_windy=False) # initial path to avoid windy squares
+        path = self.greedy_search(myPosition, nextGold, allow_windy=False) # initial path to avoid windy squares
         
         if not path:
-            print("No fully safe path found, allowing windy tiles...")
-            path = self.A_star_search(myPosition, nextGold, allow_windy=True) # if no safe path try again allowing windy tiles
+            #print("No fully safe path found, allowing windy tiles...")
+            path = self.greedy_search(myPosition, nextGold, allow_windy=True) # if no safe path try again allowing windy tiles
         
         if path:
-            print(f"Path found: {path}") # follow move of path
+            #print(f"Path found: {path}") # follow move of path
             next_move = path[0]
             return next_move
         
         # If no clear path is found, make a safe random move
         safe_moves = [move for move in self.moves if self.checkvalid(self.getNewPosition(myPosition, move), allow_windy=True)]
         if not safe_moves:
-            print("No safe moves found, making a random move.")
+            #print("No safe moves found, making a random move.")
             return random.choice(self.moves) # completely random move
         
         chosen_move = random.choice(safe_moves) # random move from safe squares
-        print(f"No path found, moving {chosen_move}")
+        #print(f"No path found, moving {chosen_move}")
         return chosen_move
     
     def uniform_cost(self, start, goal,allow_windy=False):
